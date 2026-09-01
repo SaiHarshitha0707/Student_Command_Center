@@ -111,41 +111,7 @@ Student-Command-Center/
 │
 └── README.md
 ```
-
 ---
-
-## ⚙️ Installation and Setup
-
-### 1. Clone the repository
-
-```bash
-git clone <repository-url>
-```
-
-### 2. Navigate to the project directory
-
-```bash
-cd Student-Command-Center
-```
-
-### 3. Install the required dependencies
-
-```bash
-pip install flask requests beautifulsoup4
-```
-
-### 4. Run the application
-
-```bash
-python app.py
-```
-
-### 5. Open the application
-
-After running the application, open the local address displayed in the terminal in your web browser.
-
----
-
 ## 🚀 Future Improvements
 
 Some possible future improvements include:
@@ -172,13 +138,6 @@ While building this project, I worked with and learned about:
 - Web scraping and HTML parsing
 - GitHub API integration
 - Organizing multiple features into a single application
-
----
-
-## 👩‍💻 Author
-
-**Sai Harshitha Vemula**
-
 ---
 
 ⭐ If you found this project interesting, feel free to explore the code!
