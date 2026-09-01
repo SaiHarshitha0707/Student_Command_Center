@@ -1,0 +1,30 @@
+{% extends 'base_assignment.html' %}
+{% block body %}
+
+    <section class="card">
+    <span class="tab done">View</span>
+    <h2 class="card__title">Completed Assignment List</h2>
+    <p class="card__blurb">Sorted by due date, most recent first. Filter by status or use the search above.</p>
+    <table class="ledger">
+      <thead>
+        {% if assignments|length == 0 %}
+          <tr class="empty-row"><td colspan="6">No completed assignments yet. Complete assignments to get started.</td></tr>  
+        {% else %}
+        <tr><th>ID</th><th>Subject</th><th>Assignment</th><th>Due date</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody id="ledgerBody">
+        {% for ass in assignments %}
+          <tr>
+            <td>{{loop.index}}</td>
+            <td>{{ass.subject}}</td>
+            <td>{{ass.assignment}}</td>
+            <td>{{ass.date}}</td>
+            <td>{{ass.status}}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% endif %}
+    </table>
+  </section>
+
+{% endblock body %}

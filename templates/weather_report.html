@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Karla:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --kraft:        #EBE1C8;
+    --kraft-dark:   #DCCFAE;
+    --paper:        #FBF8F1;
+    --ink:          #202A3C;
+    --ink-soft:     #5B6478;
+    --rule:         #D8CBA6;
+    --weather:      #2E9BB0;
+    --danger:       #D64545;
+    --radius-card: 4px 4px 14px 14px;
+    --shadow-card: 0 10px 24px -14px rgba(32,42,60,.45), 0 2px 4px rgba(32,42,60,.08);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; min-height:100vh;
+    background-color: var(--kraft);
+    background-image:
+      repeating-linear-gradient(135deg, rgba(255,255,255,.35) 0 2px, transparent 2px 26px),
+      radial-gradient(ellipse at top left, var(--kraft-dark), transparent 60%);
+    font-family:'Karla', sans-serif;
+    color: var(--ink);
+    padding: clamp(16px, 4vw, 48px);
+  }
+  .wrap{ max-width: 760px; margin: 0 auto; }
+
+  .refresh-row{ display:flex; justify-content:flex-end; margin-top:18px; }
+  .btn{
+    font-family:'Space Mono', monospace; font-size:.76rem; letter-spacing:.06em;
+    text-transform:uppercase; color:#fff; background: var(--stats);
+    border:none; padding:10px 16px; border-radius:20px; cursor:pointer; margin: 1.5px;
+  }
+  a{
+    text-decoration: none;
+    color: inherit;
+  }
+
+  /* ---- ID CARD HEADER ---- */
+  .id-card{
+    position:relative;
+    background: linear-gradient(160deg, #26314A, var(--ink) 70%);
+    color: var(--paper);
+    border-radius: 18px;
+    padding: 34px clamp(20px,4vw,44px) 26px;
+    overflow:hidden;
+    box-shadow: var(--shadow-card);
+    display:flex; flex-wrap:wrap;
+    align-items:flex-start; justify-content:space-between;
+    gap:18px;
+    opacity:0; animation: rise .6s ease forwards;
+  }
+  .id-card__hole{
+    position:absolute; top:16px; left:50%; transform:translateX(-50%);
+    width:52px; height:10px; border-radius:6px;
+    background: rgba(0,0,0,.35);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,.5);
+  }
+  .id-card__main{ max-width: 560px; margin-top: 20px;}
+  .id-card__eyebrow{
+    font-family:'Space Mono', monospace; font-size:.72rem; letter-spacing:.14em;
+    color:#FFD23F; margin:0 0 10px; text-transform:uppercase;
+  }
+  .id-card__title{
+    font-family:'Fraunces', serif; font-weight:600;
+    font-size: clamp(1.9rem, 4.4vw, 2.9rem); line-height:1.05; margin:0 0 12px;
+  }
+  .id-card__title em{ font-style:italic; font-weight:500; color:#FFD23F; }
+  .id-card__sub{ margin:0; font-size:1rem; color:#C7CCDA; max-width:46ch; line-height:1.5; }
+  .id-card__meta{
+    font-family:'Space Mono', monospace; text-align:right; margin-top:20px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .id-card__clock{ font-size:1.6rem; font-weight:700; letter-spacing:.03em; }
+  .id-card__date{ font-size:.8rem; color:#9AA2B4; text-transform:uppercase; letter-spacing:.08em; }
+  .id-card__barcode{
+    position:absolute; left:0; right:0; bottom:0; height:14px;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.55) 0 2px, transparent 2px 5px, rgba(255,255,255,.25) 5px 6px, transparent 6px 9px);
+    opacity:.5;
+  }
+
+  /* ---- SEARCH CARD ---- */
+  .card{
+    position:relative;
+    background: var(--paper);
+    border-radius: var(--radius-card);
+    padding: 30px 22px 24px 30px;
+    box-shadow: var(--shadow-card);
+    margin-top: 30px;
+    opacity:0; animation: rise .55s ease forwards; animation-delay:.15s;
+  }
+  .card::before{
+    content:"";
+    position:absolute; left:-7px; top:26px;
+    width:14px; height:14px; border-radius:50%;
+    background: var(--kraft);
+    box-shadow:
+      0 0 0 1px rgba(32,42,60,.06),
+      inset 0 1px 2px rgba(32,42,60,.35),
+      0 56px 0 var(--kraft), 0 56px 0 -1px rgba(32,42,60,.06), 0 56px 1px -1px rgba(32,42,60,.3);
+  }
+  .tab{
+    position:absolute; top:-14px; left:26px;
+    background: var(--weather); color:#fff;
+    font-family:'Space Mono', monospace; font-size:.68rem;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:6px 12px; border-radius:6px 6px 0 0;
+  }
+  .card__title{ font-family:'Fraunces', serif; font-weight:600; font-size:1.3rem; margin:6px 0 4px; }
+  .card__blurb{ margin:0 0 18px; font-size:.9rem; line-height:1.5; color: var(--ink-soft); }
+
+  .form-row{ display:flex; gap:12px; align-items:end; flex-wrap:wrap; }
+  .field{ flex:1; min-width:200px; }
+  .field label{
+    display:block; font-family:'Space Mono', monospace; font-size:.68rem;
+    letter-spacing:.08em; text-transform:uppercase; color: var(--ink-soft); margin-bottom:6px;
+  }
+  .field input{
+    width:100%; padding:11px 12px; font-family:'Karla', sans-serif; font-size:.98rem;
+    border:1.5px solid var(--rule); border-radius:8px; background:#fff; color:var(--ink);
+  }
+  .field input:focus-visible{ outline:3px solid var(--ink); outline-offset:1px; }
+  .btn{
+    font-family:'Space Mono', monospace; font-size:.76rem; letter-spacing:.06em;
+    text-transform:uppercase; color:#fff; background: var(--weather);
+    border:none; padding:12px 18px; border-radius:20px; cursor:pointer; white-space:nowrap;
+  }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn:disabled{ opacity:.6; cursor:default; }
+
+  .msg{
+    font-family:'Space Mono', monospace; font-size:.82rem; margin-top:16px;
+    padding:10px 12px; border-radius:8px; display:none;
+  }
+  .msg.show{ display:block; }
+  .msg.err{ background: color-mix(in srgb, var(--danger) 14%, white); color:#8C2A2A; }
+  .msg.loading{ background: color-mix(in srgb, var(--weather) 14%, white); color:#1B5C68; }
+
+  /* ---- REPORT CARD ---- */
+  .report{
+    position:relative;
+    background: linear-gradient(160deg, #26314A, var(--ink) 78%);
+    color: var(--paper);
+    border-radius: var(--radius-card);
+    padding: 28px clamp(18px,3vw,36px) 26px;
+    box-shadow: var(--shadow-card);
+    margin-top: 26px;
+  }
+  .report.show{ display:block; opacity:0; animation: rise .5s ease forwards; }
+  .report__tab{
+    position:absolute; top:-14px; left:26px;
+    background: var(--weather); color:#fff;
+    font-family:'Space Mono', monospace; font-size:.68rem;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:6px 12px; border-radius:6px 6px 0 0;
+  }
+  .report__place{
+    font-family:'Fraunces', serif; font-weight:600; font-size:1.4rem; margin:6px 0 2px;
+  }
+  .report__condition{
+    font-family:'Space Mono', monospace; font-size:.85rem; color:#FFD23F; margin:0 0 20px;
+  }
+  .report-grid{
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:16px;
+  }
+  .metric{ border-left:3px solid var(--weather); padding-left:12px; }
+  .metric__icon{ font-size:1.2rem; }
+  .metric__num{ font-family:'Space Mono', monospace; font-weight:700; font-size:1.35rem; display:block; margin-top:2px; }
+  .metric__label{ font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:#9AA2B4; }
+
+  footer{
+    text-align:center; margin-top:30px; font-family:'Space Mono', monospace;
+    font-size:.74rem; letter-spacing:.05em; color: var(--ink-soft);
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(14px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  :focus-visible{ outline: 3px solid var(--ink); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } .card,.id-card,.report{ opacity:1; transform:none; } }
+  @media (max-width: 640px){
+    .id-card{ flex-direction:column; } .id-card__meta{ text-align:left; }
+    .card{ padding-left:26px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="id-card">
+    <div class="id-card__hole" aria-hidden="true"></div>
+    <div class="id-card__main">
+      <p class="id-card__eyebrow">Live Lookup · Semester Pass</p>
+      <h1 class="id-card__title">Weather <em>Report</em></h1>
+      <p class="id-card__sub">A quick look before you leave the dorm, so the jacket decision is made for you.</p>
+    </div>
+    <div class="id-card__meta">
+      <span class="id-card__clock" id="clock">--:--</span>
+      <span class="id-card__date" id="date">—</span>
+    </div>
+    <div class="id-card__barcode" aria-hidden="true"></div>
+  </header>
+
+  <div class="refresh-row">
+    <a href="/assignment_tracker" type="button" class="btn" id="refreshBtn">↻ Refresh</a>
+    <a href="/" type="button" class="btn" id="refreshBtn">🏠︎ Home</a>
+  </div>
+
+  <!-- SEARCH -->
+  <section class="card">
+    <span class="tab">Lookup</span>
+    <h2 class="card__title">Check the Weather</h2>
+    <p class="card__blurb">Type any city, town, or landmark — it's geocoded, then looked up for current conditions.</p>
+    <form action="/weather_report" method="post" id="searchForm" class="form-row" novalidate>
+      <div class="field">
+        <label for="location">Location</label>
+        <input id="location" name="location" type="text" placeholder="e.g. Amsterdam">
+      </div>
+      <button type="submit" class="btn" id="searchBtn">Get weather</button>
+    </form>
+    <p class="msg" id="statusMsg"></p>
+  </section>
+
+  <!-- REPORT -->
+   {% if op %}
+    
+  <section class="report" id="report">
+    <span class="report__tab">Report</span>
+    <h2 class="report__place" id="reportPlace">{{op[0]}}</h2>
+    <p class="report__condition" id="reportCondition">{{op[6]}}</p>
+    <div class="report-grid">
+      <div class="metric">
+        <span class="metric__icon">🌡️</span>
+        <span class="metric__num" id="metricTemp">{{op[1]}}</span>
+        <span class="metric__label">Temperature (°C)</span>
+      </div>
+      <div class="metric">
+        <span class="metric__icon">💧</span>
+        <span class="metric__num" id="metricHumidity">{{op[2]}}</span>
+        <span class="metric__label">Humidity (%)</span>
+      </div>
+      <div class="metric">
+        <span class="metric__icon">💨</span>
+        <span class="metric__num" id="metricWind">{{op[3]}}</span>
+        <span class="metric__label">Wind speed (km/h)</span>
+      </div>
+      <div class="metric">
+        <span class="metric__icon">🧭</span>
+        <span class="metric__num" id="metricDirection">{{op[4]}}</span>
+        <span class="metric__label">Wind direction (°)</span>
+      </div>
+      <div class="metric">
+        <span class="metric__icon">🌧️</span>
+        <span class="metric__num" id="metricPrecip">{{op[5]}}</span>
+        <span class="metric__label">Precipitation (mm)</span>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <footer>Live data via Open-Meteo &amp; py4e opengeo · Weather Report</footer>
+
+</div>
+
+<script>
+  // ---- live clock ----
+  function updateClock(){
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('date').textContent =
+      now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+/*
+  // ---- weather code map, same as the python script ----
+  const weatherCodes = {
+    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+    45: "Fog", 48: "Depositing rime fog",
+    51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
+    61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain",
+    71: "Slight snow fall", 73: "Moderate snow fall", 75: "Heavy snow fall",
+    80: "Slight rain showers", 81: "Moderate rain showers", 82: "Violent rain showers",
+    95: "Thunderstorm"
+  };
+
+  const form = document.getElementById('searchForm');
+  const statusMsg = document.getElementById('statusMsg');
+  const searchBtn = document.getElementById('searchBtn');
+  const report = document.getElementById('report');
+
+  function showStatus(text, kind){
+    statusMsg.textContent = text;
+    statusMsg.className = 'msg show ' + kind;
+  }
+  function hideStatus(){
+    statusMsg.className = 'msg';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const location = document.getElementById('location').value.trim();
+    if(!location) return;
+
+    report.classList.remove('show');
+    searchBtn.disabled = true;
+    showStatus('Looking up "' + location + '" …', 'loading');
+
+    try {
+      // ---- step 1: geocode via py4e opengeo, same endpoint as the script ----
+      const geoUrl = 'https://py4e-data.dr-chuck.net/opengeo?q=' + encodeURIComponent(location);
+      const geoRes = await fetch(geoUrl);
+      if(!geoRes.ok) throw new Error('geocode-failed');
+      const geoData = await geoRes.json();
+
+      if(!geoData.features || geoData.features.length === 0){
+        showStatus('Location not found. Try a different spelling or a nearby city.', 'err');
+        searchBtn.disabled = false;
+        return;
+      }
+
+      const { lat, lon } = geoData.features[0].properties;
+      const displayName = geoData.features[0].properties.display_name || location;
+
+      // ---- step 2: current conditions via open-meteo, same params as the script ----
+      const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat +
+        '&longitude=' + lon +
+        '&forecast_days=1&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,wind_direction_10m,precipitation&timezone=Asia%2FKolkata';
+      const wxRes = await fetch(weatherUrl);
+      if(!wxRes.ok) throw new Error('weather-failed');
+      const wxData = await wxRes.json();
+      const c = wxData.current;
+
+      document.getElementById('reportPlace').textContent = displayName;
+      document.getElementById('reportCondition').textContent =
+        (weatherCodes[c.weather_code] || 'Unknown condition') + ' · ' + wxData.timezone;
+      document.getElementById('metricTemp').textContent = c.temperature_2m;
+      document.getElementById('metricHumidity').textContent = c.relative_humidity_2m;
+      document.getElementById('metricWind').textContent = c.wind_speed_10m;
+      document.getElementById('metricDirection').textContent = c.wind_direction_10m;
+      document.getElementById('metricPrecip').textContent = c.precipitation;
+
+      hideStatus();
+      report.classList.add('show');
+    } catch (err) {
+      showStatus('Could not fetch weather data. The location service or forecast API may be unreachable right now — try again in a moment.', 'err');
+    } finally {
+      searchBtn.disabled = false;
+    }
+  });
+  */
+</script>
+</body>
+</html>

@@ -1,0 +1,380 @@
+{% extends 'base_assignment.html' %}
+{% block body %}
+
+<div class="wrap">
+
+  <header class="id-card">
+    <div class="id-card__hole" aria-hidden="true"></div>
+    <div class="id-card__main">
+      <p class="id-card__eyebrow">Due List · Semester Pass</p>
+      <h1 class="id-card__title">Assignment <em>Tracker</em></h1>
+      <p class="id-card__sub">Every assignment, filed by subject, sorted by due date — and marked off the second it's done.</p>
+    </div>
+    <div class="id-card__meta">
+      <span class="id-card__clock" id="clock">--:--</span>
+      <span class="id-card__date" id="date">—</span>
+    </div>
+    <div class="id-card__barcode" aria-hidden="true"></div>
+  </header>
+
+  <div class="refresh-row">
+    <a href="/assignment_tracker" type="button" class="btn" id="refreshBtn">↻ Refresh</a>
+    <a href="/" type="button" class="btn" id="refreshBtn">🏠︎ Home</a>
+  </div>
+
+  <div class="stat-strip">
+    <div class="stat-card">
+      {% set n=namespace(i=0) %}
+      {% for ass in allAssignment_Tracker %}
+        {% set n.i = n.i + 1 %}
+      {% endfor %}
+      <span class="stat-card__num" id="statTotal">{{n.i}}</span>
+      <span class="stat-card__label">Total assignments</span>
+    </div>
+    <div class="stat-card">
+      {% set n=namespace(j=0) %}
+      {% for ass in allAssignment_Tracker %}
+        {% if ass.status=='Incomplete' %}
+          {% set n.j = n.j + 1 %}
+        {% endif %}
+      {% endfor %}
+      <span class="stat-card__num" id="statPending">{{n.j}}</span>
+      <span class="stat-card__label">Pending</span>
+    </div>
+    <div class="stat-card">
+      {% set n=namespace(k=0) %}
+      {% for ass in allAssignment_Tracker %}
+        {% if ass.status=='Completed' %}
+          {% set n.k = n.k + 1 %}
+        {% endif %}
+      {% endfor %}
+      <span class="stat-card__num" id="statCompleted">{{n.k}}</span>
+      <span class="stat-card__label">Completed</span>
+    </div>
+  </div>
+
+  <!-- ADD ASSIGNMENT -->
+  <section class="card">
+    <span class="tab">Add</span>
+    <h2 class="card__title">Add an Assignment</h2>
+    <p class="card__blurb">Subject + name must be unique — trying to add the same pair twice gets rejected, not merged.</p>
+    <form action="/assignment_tracker" method="post" id="addForm" class="form-grid" novalidate>
+      <div class="field">
+        <label for="addSubject">Subject</label>
+        <input id="addSubject" name="addSubject" type="text" placeholder="e.g. Biology" required>
+      </div>
+      <div class="field">
+        <label for="addName">Assignment name</label>
+        <input id="addName" name="addName" type="text" placeholder="e.g. Lab Report 3" required>
+      </div>
+      <div class="field">
+        <label for="addDate">Due date</label>
+        <input id="addDate" name="addDate" type="date" required>
+      </div>
+      <div class="field">
+        <label for="addStatus">Status</label>
+        <select id="addStatus" name="addStatus">
+          <option value="Incomplete">Incomplete</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+      <button type="submit" class="btn">Add assignment</button>
+    </form>
+    <p class="msg" id="addMsg"></p>
+  </section>
+  
+  <!-- SEARCH / DELETE 
+
+  <section class="card">
+    <span class="tab">Remove</span>
+    <h2 class="card__title">Search or Delete</h2>
+    <p class="card__blurb">Search narrows the list below by subject; delete needs an exact subject + name match.</p>
+    <div class="tool-row">
+      <div class="field">
+        <label for="searchSubject">Search by subject</label>
+        <input id="searchSubject" type="text" placeholder="Leave blank to show all">
+      </div>
+      <button class="btn ghost" id="clearSearch" type="button">Clear filter</button>
+    </div>
+    <div class="tool-row">
+      <div class="field">
+        <label for="delSubject">Delete — subject</label>
+        <input id="delSubject" type="text" placeholder="e.g. Biology">
+      </div>
+      <div class="field">
+        <label for="delName">Delete — assignment name</label>
+        <input id="delName" type="text" placeholder="e.g. Lab Report 3">
+      </div>
+      <button class="btn" id="delBtn" type="button" style="background:var(--tasks);">Delete entry</button>
+    </div>
+    <p class="msg" id="toolMsg"></p>
+  </section>
+  -->
+
+  <!-- VIEW -->
+  <section class="card">
+    <span class="tab done">View</span>
+    <h2 class="card__title">Assignment List</h2>
+    <p class="card__blurb">Sorted by due date, most recent first. Filter by status or use the search above.</p>
+    <div class="view-tabs">
+      <button type="button" class="active" data-status="all">All</button>
+      <a href="/assignment_tracker_pending" type="button" class="btn-pending">Pending</a>
+      <a href="/assignment_tracker_completed" type="button" class="btn-completed"de>Completed</a>
+    </div>
+    <table class="ledger">
+      <thead>
+        {% if allAssignment_Tracker|length == 0 %}
+          <tr class="empty-row"><td colspan="6">No assignments yet. Add your first one above.</td></tr>  
+        {% else %}
+        <tr><th>ID</th><th>Subject</th><th>Assignment</th><th>Due date</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody id="ledgerBody">
+        {% for ass in allAssignment_Tracker %}
+          <tr>
+            <td>{{loop.index}}</td>
+            <td>{{ass.subject}}</td>
+            <td>{{ass.assignment}}</td>
+            <td>{{ass.date}}</td>
+            <td>{{ass.status}}</td>
+            <td>
+              <a href="/update_ass/{{ass.subject}}/{{ass.assignment}}" type="button" class="update-btn">Update</a>
+              <a href="/delete_ass/{{ass.subject}}/{{ass.assignment}}" type="button" class="delete-btn">Delete</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% endif %}
+    </table>
+  </section>
+
+  <footer>In-memory list · resets on page reload · Assignment Tracker</footer>
+
+</div>
+
+
+<script>
+  // ---- live clock ----
+  function updateClock(){
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('date').textContent =
+      now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+  /*
+  // ---- "database" (in-memory, mirrors Assignment table: id, subject, name, date, status) ----
+  let assignments = [];
+  let nextId = 1;
+  let statusFilter = 'all';
+  let updateField = 'date';
+
+  const addForm = document.getElementById('addForm');
+  const updateForm = document.getElementById('updateForm');
+  const addMsg = document.getElementById('addMsg');
+  const updateMsg = document.getElementById('updateMsg');
+  const toolMsg = document.getElementById('toolMsg');
+  const ledgerBody = document.getElementById('ledgerBody');
+  const searchSubject = document.getElementById('searchSubject');
+
+  function showMsg(el, text, kind){
+    el.textContent = text;
+    el.className = 'msg show ' + kind;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderStats(){
+    document.getElementById('statTotal').textContent = assignments.length;
+    document.getElementById('statPending').textContent = assignments.filter(a=>a.status==='IC').length;
+    document.getElementById('statCompleted').textContent = assignments.filter(a=>a.status==='C').length;
+  }
+
+  function findMatches(){
+    const subjectFilter = searchSubject.value.trim().toLowerCase();
+    return assignments.filter(a =>
+      (statusFilter === 'all' || a.status === statusFilter) &&
+      (!subjectFilter || a.subject.toLowerCase() === subjectFilter)
+    );
+  }
+
+  function renderLedger(){
+    const rows = findMatches().sort((a,b) => b.date.localeCompare(a.date));
+
+    if(rows.length === 0){
+      ledgerBody.innerHTML = `<tr class="empty-row"><td colspan="6">${
+        assignments.length === 0 ? 'No assignments yet. Add your first one above.' : 'No matching assignments found.'
+      }</td></tr>`;
+      return;
+    }
+
+    ledgerBody.innerHTML = rows.map(a => `
+      <tr>
+        <td class="num">${a.id}</td>
+        <td>${escapeHtml(a.subject)}</td>
+        <td>${escapeHtml(a.name)}</td>
+        <td>${a.date}</td>
+        <td><span class="status-pill ${a.status}">${a.status === 'C' ? 'Completed' : 'Incomplete'}</span></td>
+        <td><button class="del-btn" data-id="${a.id}">Delete</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function renderAll(){ renderStats(); renderLedger(); }
+
+  // ---- persistence (shared key-value storage, so the Statistics dashboard can read this data) ----
+  const STORAGE_KEY = 'assignment_tracker_entries';
+
+  async function loadAssignments(){
+    try{
+      const result = await window.storage.get(STORAGE_KEY, false);
+      const parsed = result ? JSON.parse(result.value) : { assignments: [], nextId: 1 };
+      assignments = parsed.assignments || [];
+      nextId = parsed.nextId || (assignments.reduce((m,a)=>Math.max(m,a.id),0) + 1);
+    }catch(err){
+      assignments = []; nextId = 1;
+    }
+    renderAll();
+  }
+
+  async function saveAssignments(){
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify({ assignments, nextId }), false);
+    }catch(err){
+      console.error('Storage error:', err);
+    }
+  }
+
+  // ---- add assignment (rejects duplicates on subject+name, unlike the other trackers) ----
+  addForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const subject = document.getElementById('addSubject').value.trim();
+    const name = document.getElementById('addName').value.trim();
+    const date = document.getElementById('addDate').value;
+    const status = document.getElementById('addStatus').value;
+
+    if(!subject || !name || !date){
+      showMsg(addMsg, 'Fill in subject, assignment name, and due date.', 'err');
+      return;
+    }
+
+    const exists = assignments.some(a =>
+      a.subject.toLowerCase() === subject.toLowerCase() &&
+      a.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if(exists){
+      showMsg(addMsg, 'Already Exists!', 'err');
+      return;
+    }
+
+    assignments.push({ id: nextId++, subject, name, date, status });
+    showMsg(addMsg, 'Added Successfully!', 'ok');
+    addForm.reset();
+    document.getElementById('addStatus').value = 'IC';
+    renderAll();
+    await saveAssignments();
+  });
+
+  // ---- update field toggle ----
+  document.querySelectorAll('.update-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.update-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateField = btn.dataset.field;
+      document.getElementById('updDateField').style.display = updateField === 'date' ? 'block' : 'none';
+      document.getElementById('updStatusField').style.display = updateField === 'status' ? 'block' : 'none';
+    });
+  });
+
+  // ---- update assignment (date or status, fails if no match) ----
+  updateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const subject = document.getElementById('updSubject').value.trim();
+    const name = document.getElementById('updName').value.trim();
+
+    if(!subject || !name){
+      showMsg(updateMsg, 'Fill in subject and assignment name.', 'err');
+      return;
+    }
+
+    const existing = assignments.find(a =>
+      a.subject.toLowerCase() === subject.toLowerCase() &&
+      a.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if(!existing){
+      showMsg(updateMsg, 'Assignment not found!', 'err');
+      return;
+    }
+
+    if(updateField === 'date'){
+      const date = document.getElementById('updDate').value;
+      if(!date){ showMsg(updateMsg, 'Pick a new due date.', 'err'); return; }
+      existing.date = date;
+    } else {
+      existing.status = document.getElementById('updStatus').value;
+    }
+
+    showMsg(updateMsg, 'Updated Successfully!', 'ok');
+    updateForm.reset();
+    renderAll();
+    await saveAssignments();
+  });
+
+  // ---- search ----
+  searchSubject.addEventListener('input', renderLedger);
+  document.getElementById('clearSearch').addEventListener('click', () => {
+    searchSubject.value = '';
+    renderLedger();
+  });
+
+  // ---- status filter tabs ----
+  document.querySelectorAll('.view-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-tabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      statusFilter = btn.dataset.status;
+      renderLedger();
+    });
+  });
+
+  // ---- delete (by form) ----
+  document.getElementById('delBtn').addEventListener('click', async () => {
+    const subject = document.getElementById('delSubject').value.trim();
+    const name = document.getElementById('delName').value.trim();
+    if(!subject || !name){
+      showMsg(toolMsg, 'Enter both a subject and an assignment name to delete.', 'err');
+      return;
+    }
+    const before = assignments.length;
+    assignments = assignments.filter(a => !(
+      a.subject.toLowerCase() === subject.toLowerCase() &&
+      a.name.toLowerCase() === name.toLowerCase()
+    ));
+    const removed = before - assignments.length;
+    showMsg(toolMsg, removed > 0 ? 'DELETED Successfully!' : 'Does not exist!', removed > 0 ? 'ok' : 'err');
+    renderAll();
+    if(removed > 0) await saveAssignments();
+  });
+
+  // ---- delete (inline row button, event delegation) ----
+  ledgerBody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.del-btn');
+    if(!btn) return;
+    const id = parseInt(btn.dataset.id, 10);
+    assignments = assignments.filter(a => a.id !== id);
+    showMsg(toolMsg, 'DELETED Successfully!', 'ok');
+    renderAll();
+    await saveAssignments();
+  });
+
+  loadAssignments();
+  */
+</script>
+
+
+{% endblock body %}

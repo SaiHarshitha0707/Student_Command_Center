@@ -1,0 +1,384 @@
+
+{% extends 'base_expense.html' %}
+{% block body %}
+
+<div class="wrap">
+
+  <header class="id-card">
+    <div class="id-card__hole" aria-hidden="true"></div>
+    <div class="id-card__main">
+      <p class="id-card__eyebrow">Ledger · Semester Pass</p>
+      <h1 class="id-card__title">Expense <em>Tracker</em></h1>
+      <p class="id-card__sub">Every rupee, filed by category and description, so month-end never sneaks up on you.</p>
+    </div>
+    <div class="id-card__meta">
+      <span class="id-card__clock" id="clock">--:--</span>
+      <span class="id-card__date" id="date">—</span>
+    </div>
+    <div class="id-card__barcode" aria-hidden="true"></div>
+  </header>
+
+  <div class="refresh-row">
+    <a href="/expense_tracker" type="button" class="btn" id="refreshBtn">↻ Refresh</a>
+    <a href="/" type="button" class="btn" id="refreshBtn">🏠︎ Home</a>
+  </div>
+
+  <div class="stat-strip">
+    <div class="stat-card">
+      {% set n = namespace(amt=0) %}
+      {% for expense in allExpense %}
+        {% set n.amt = n.amt + expense.amount|float %}
+      {% endfor %}
+      <span class="stat-card__num" id="statTotal">{{n.amt}}</span>
+      <span class="stat-card__label">Total expense</span>
+    </div>
+    <div class="stat-card">
+      {% set n = namespace(i=0) %}
+      {% for ex in allExpense %}
+        {% set n.i = n.i+1 %}
+      {% endfor %}  
+      <span class="stat-card__num" id="statCount">{{n.i}}</span>
+      <span class="stat-card__label">Logged entries</span>
+    </div>
+    <div class="stat-card">
+      {% set ns=namespace(cat=[]) %}
+      {% for ex in allExpense %}
+        {% if ex.category not in cat %}
+          {% set ns.cat = ns.cat + [ex.category] %}
+        {% endif %}
+      {% endfor %}
+      <span class="stat-card__num" id="statCategories">{{ns.cat|length}}</span>
+      <span class="stat-card__label">Categories</span>
+    </div>
+  </div>
+
+  <!-- ADD EXPENSE -->
+  <section class="card">
+    <span class="tab">Add</span>
+    <h2 class="card__title">Log an Expense</h2>
+    <p class="card__blurb">Same category and description as before? The amount just stacks on top, and the date updates.</p>
+    <form  action="/expense_tracker" method="post" id="addForm" class="form-grid" novalidate>
+      <div class="field">
+        <label for="addDate">Date</label>
+        <input id="addDate" name="addDate" type="date" required>
+      </div>
+      <div class="field">
+        <label for="addCategory">Category</label>
+        <input id="addCategory" name="addCategory" type="text" placeholder="e.g. Food" required>
+      </div>
+      <div class="field">
+        <label for="addDescription">Description</label>
+        <input id="addDescription" name="addDescription" type="text" placeholder="e.g. Groceries" required>
+      </div>
+      <div class="field">
+        <label for="addAmount">Amount (₹)</label>
+        <input id="addAmount" name="addAmount" type="number" min="0.01" step="0.01" placeholder="250" required>
+      </div>
+      <button type="submit" class="btn">Add expense</button>
+    </form>
+    <p class="msg" id="addMsg"></p>
+  </section>
+
+  <!-- UPDATE EXPENSE -->
+ 
+
+  <!-- SEARCH / DELETE 
+  <section class="card">
+    <span class="tab danger">Find &amp; Remove</span>
+    <h2 class="card__title">Search or Delete</h2>
+    <div class="search-tabs">
+      <button type="button" class="active" data-mode="all">All</button>
+      <button type="button" data-mode="date">By date</button>
+      <button type="button" data-mode="category">By category</button>
+    </div>
+    <div class="tool-row" id="searchDateRow" style="display:none;">
+      <div class="field">
+        <label for="searchDate">Date</label>
+        <input id="searchDate" type="date">
+      </div>
+    </div>
+    <div class="tool-row" id="searchCategoryRow" style="display:none;">
+      <div class="field">
+        <label for="searchCategory">Category</label>
+        <input id="searchCategory" type="text" placeholder="e.g. Food">
+      </div>
+    </div>
+    <div class="tool-row">
+      <div class="field">
+        <label for="delCategory">Delete — category</label>
+        <input id="delCategory" type="text" placeholder="e.g. Food">
+      </div>
+      <div class="field">
+        <label for="delDescription">Delete — description</label>
+        <input id="delDescription" type="text" placeholder="e.g. Groceries">
+      </div>
+      <button class="btn danger" id="delBtn" type="button">Delete entry</button>
+    </div>
+    <p class="msg" id="toolMsg"></p>
+  </section>
+  -->
+
+  <!-- LEDGER -->
+  <section class="card">
+    <span class="tab">Ledger</span>
+    <h2 class="card__title">Expense Ledger</h2>
+    <p class="card__blurb">Sorted by date (newest first), then category and description.</p>
+    <table class="ledger">
+      <thead>
+        {% if allExpense|length == 0 %}
+          <tr class="empty-row"><td colspan="6">No expenses logged yet. Add your first one above.</td></tr>
+        {% else %}
+        <tr><th>ID</th><th>Date</th><th>Category</th><th>Description</th><th>Amount (₹)</th><th>Action</th></tr>
+      </thead>
+        {% for expense in allExpense %}
+          <tr>
+            <td>{{loop.index}}</td>
+            <td>{{expense.date}}</td>
+            <td>{{expense.category}}</td>
+            <td>{{expense.desc}}</td>
+            <td>{{expense.amount}}</td>
+            <td>
+              <a href="/update_expense/{{expense.category}}/{{expense.desc}}" type="button" class="update-btn">Update</a>
+              <a href="/delete_expense/{{expense.category}}/{{expense.desc}}" type="button" class="delete-btn">Delete</a>
+            </td>
+            <td></td>
+          </tr>
+        {% endfor %}
+      <tbody id="ledgerBody">
+      </tbody>
+      {% endif %}
+    </table>
+  </section>
+
+  <footer>In-memory ledger · resets on page reload · Expense Tracker</footer>
+
+</div>
+
+
+<script>
+  // ---- live clock ----
+  function updateClock(){
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('date').textContent =
+      now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+/*
+  // ---- "database" (in-memory, mirrors Expense table: id, date, category, description, amount) ----
+  let expenses = [];
+  let nextId = 1;
+  let searchMode = 'all';
+
+  const addForm = document.getElementById('addForm');
+  const updateForm = document.getElementById('updateForm');
+  const addMsg = document.getElementById('addMsg');
+  const updateMsg = document.getElementById('updateMsg');
+  const toolMsg = document.getElementById('toolMsg');
+  const ledgerBody = document.getElementById('ledgerBody');
+
+  function showMsg(el, text, kind){
+    el.textContent = text;
+    el.className = 'msg show ' + kind;
+  }
+
+  function fmtDate(iso){
+    if(!iso) return '';
+    const [y,m,d] = iso.split('-');
+    return `${d}-${m}-${y}`;
+  }
+
+  function fmtRupees(n){
+    return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderStats(){
+    const total = expenses.reduce((s,r)=>s+r.amount,0);
+    const categories = new Set(expenses.map(r=>r.category.toLowerCase())).size;
+    document.getElementById('statTotal').textContent = fmtRupees(total);
+    document.getElementById('statCount').textContent = expenses.length;
+    document.getElementById('statCategories').textContent = categories;
+  }
+
+  function findMatches(){
+    if(searchMode === 'date'){
+      const d = document.getElementById('searchDate').value;
+      if(!d) return expenses.slice();
+      return expenses.filter(r => r.date === d);
+    }
+    if(searchMode === 'category'){
+      const c = document.getElementById('searchCategory').value.trim().toLowerCase();
+      if(!c) return expenses.slice();
+      return expenses.filter(r => r.category.toLowerCase() === c);
+    }
+    return expenses.slice();
+  }
+
+  function renderLedger(){
+    const rows = findMatches().sort((a,b) =>
+      b.date.localeCompare(a.date) ||
+      a.category.localeCompare(b.category) ||
+      a.description.localeCompare(b.description)
+    );
+
+    if(rows.length === 0){
+      ledgerBody.innerHTML = `<tr class="empty-row"><td colspan="6">${
+        searchMode === 'all' ? 'No expenses logged yet. Add your first one above.' : 'No matching expenses found.'
+      }</td></tr>`;
+      return;
+    }
+
+    ledgerBody.innerHTML = rows.map(r => `
+      <tr>
+        <td class="num">${r.id}</td>
+        <td>${fmtDate(r.date)}</td>
+        <td>${escapeHtml(r.category)}</td>
+        <td>${escapeHtml(r.description)}</td>
+        <td class="num">${r.amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+        <td><button class="del-btn" data-id="${r.id}">Delete</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function renderAll(){ renderStats(); renderLedger(); }
+
+  // ---- persistence (shared key-value storage, so the Statistics dashboard can read this data) ----
+  const STORAGE_KEY = 'expense_tracker_entries';
+
+  async function loadExpenses(){
+    try{
+      const result = await window.storage.get(STORAGE_KEY, false);
+      const parsed = result ? JSON.parse(result.value) : { expenses: [], nextId: 1 };
+      expenses = parsed.expenses || [];
+      nextId = parsed.nextId || (expenses.reduce((m,r)=>Math.max(m,r.id),0) + 1);
+    }catch(err){
+      expenses = []; nextId = 1;
+    }
+    renderAll();
+  }
+
+  async function saveExpenses(){
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify({ expenses, nextId }), false);
+    }catch(err){
+      console.error('Storage error:', err);
+    }
+  }
+
+  // ---- add expense (UNIQUE on category+description -> add amount, refresh date) ----
+  addForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const date = document.getElementById('addDate').value;
+    const category = document.getElementById('addCategory').value.trim();
+    const description = document.getElementById('addDescription').value.trim();
+    const amount = parseFloat(document.getElementById('addAmount').value);
+
+    if(!date || !category || !description || !amount || amount <= 0){
+      showMsg(addMsg, 'Fill in date, category, description, and an amount greater than 0.', 'err');
+      return;
+    }
+
+    const existing = expenses.find(r =>
+      r.category.toLowerCase() === category.toLowerCase() &&
+      r.description.toLowerCase() === description.toLowerCase()
+    );
+
+    if(existing){
+      existing.amount += amount;
+      existing.date = date;
+      showMsg(addMsg, `Added ₹${amount} to the existing "${category} — ${description}" entry.`, 'ok');
+    } else {
+      expenses.push({ id: nextId++, date, category, description, amount });
+      showMsg(addMsg, 'Added Successfully', 'ok');
+    }
+
+    addForm.reset();
+    renderAll();
+    await saveExpenses();
+  });
+
+  // ---- update expense (adds amount + refreshes date, fails if no match) ----
+  updateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const category = document.getElementById('updCategory').value.trim();
+    const description = document.getElementById('updDescription').value.trim();
+    const date = document.getElementById('updDate').value;
+    const amount = parseFloat(document.getElementById('updAmount').value);
+
+    if(!category || !description || !date || !amount || amount <= 0){
+      showMsg(updateMsg, 'Fill in category, description, date, and an amount greater than 0.', 'err');
+      return;
+    }
+
+    const existing = expenses.find(r =>
+      r.category.toLowerCase() === category.toLowerCase() &&
+      r.description.toLowerCase() === description.toLowerCase()
+    );
+
+    if(existing){
+      existing.amount += amount;
+      existing.date = date;
+      showMsg(updateMsg, 'Updated Successfully!', 'ok');
+      updateForm.reset();
+      renderAll();
+      await saveExpenses();
+    } else {
+      showMsg(updateMsg, 'Expense not found!', 'err');
+    }
+  });
+
+  // ---- search mode tabs ----
+  document.querySelectorAll('.search-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.search-tabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      searchMode = btn.dataset.mode;
+      document.getElementById('searchDateRow').style.display = searchMode === 'date' ? 'flex' : 'none';
+      document.getElementById('searchCategoryRow').style.display = searchMode === 'category' ? 'flex' : 'none';
+      renderLedger();
+    });
+  });
+  document.getElementById('searchDate').addEventListener('input', renderLedger);
+  document.getElementById('searchCategory').addEventListener('input', renderLedger);
+
+  // ---- delete (by form) ----
+  document.getElementById('delBtn').addEventListener('click', async () => {
+    const category = document.getElementById('delCategory').value.trim();
+    const description = document.getElementById('delDescription').value.trim();
+    if(!category || !description){
+      showMsg(toolMsg, 'Enter both a category and a description to delete.', 'err');
+      return;
+    }
+    const before = expenses.length;
+    expenses = expenses.filter(r => !(
+      r.category.toLowerCase() === category.toLowerCase() &&
+      r.description.toLowerCase() === description.toLowerCase()
+    ));
+    const removed = before - expenses.length;
+    showMsg(toolMsg, removed > 0 ? 'Deleted Successfully' : 'Expense not found!', removed > 0 ? 'ok' : 'err');
+    renderAll();
+    if(removed > 0) await saveExpenses();
+  });
+
+  // ---- delete (inline row button, event delegation) ----
+  ledgerBody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.del-btn');
+    if(!btn) return;
+    const id = parseInt(btn.dataset.id, 10);
+    expenses = expenses.filter(r => r.id !== id);
+    showMsg(toolMsg, 'Deleted Successfully', 'ok');
+    renderAll();
+    await saveExpenses();
+  });
+
+  loadExpenses();
+  */
+</script>
+
+{% endblock body %}

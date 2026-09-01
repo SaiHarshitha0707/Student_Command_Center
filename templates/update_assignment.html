@@ -1,0 +1,34 @@
+{% extends 'base_assignment.html' %}
+{% block body %}
+<form action="/update_ass/{{ass.subject}}/{{ass.assignment}}" method="post">
+    <section class="card">
+        <span class="tab update">Update</span>
+        <h2 class="card__title">Update an Assignment</h2>
+        <p class="card__blurb">Change the due date, or flip the status — pick which field you're updating first.</p>
+        <form id="updateForm" class="form-grid" novalidate>
+        <div class="field">
+            <label for="updSubject">Subject</label>
+            <input id="updSubject" name="updSubject" type="text" value="{{ass.subject}}">
+        </div>
+        <div class="field">
+            <label for="updName">Assignment name</label>
+            <input id="updName" name="updName" type="text" value="{{ass.assignment}}">
+        </div>
+        <div class="field" id="updDateField">
+            <label for="updDate">Update due date</label>
+            <input id="updDate" name="updDate" type="date" value="{{ass.date}}">
+        </div>
+        <div class="field" id="updStatusField">
+            <label for="updStatus">Update status</label>
+            <select id="updStatus" value="{{ass.status}}" name="updStatus">
+                <option value="Incomplete">Incomplete</option>
+                <option value="Completed">Completed</option>
+            </select>
+        </div>
+        <button type="submit" class="btn update">Update</button>
+        </form>
+        <p class="msg" id="updateMsg"></p>
+    </section>
+</form>
+
+{%endblock body%}

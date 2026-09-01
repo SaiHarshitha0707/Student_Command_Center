@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistics Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Karla:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --kraft:        #EBE1C8;
+    --kraft-dark:   #DCCFAE;
+    --paper:        #FBF8F1;
+    --ink:          #202A3C;
+    --ink-soft:     #5B6478;
+    --rule:         #D8CBA6;
+    --study:        #3B6EA5;
+    --expenses:     #3F8F5F;
+    --tasks:        #D64545;
+    --stats:        #B85C8A;
+    --ink-table:    #1b1f27;
+    --muted-table:  #6b7280;
+    --line-table:   #e6e8ec;
+    --accent-table: #4f5eff;
+    --bg-table:     #eef0f4;
+    --radius-card: 4px 4px 14px 14px;
+    --shadow-card: 0 10px 24px -14px rgba(32,42,60,.45), 0 2px 4px rgba(32,42,60,.08);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; min-height:100vh;
+    background-color: var(--kraft);
+    background-image:
+      repeating-linear-gradient(135deg, rgba(255,255,255,.35) 0 2px, transparent 2px 26px),
+      radial-gradient(ellipse at top left, var(--kraft-dark), transparent 60%);
+    font-family:'Karla', sans-serif;
+    color: var(--ink);
+    padding: clamp(16px, 4vw, 48px);
+  }
+  .wrap{ max-width: 1080px; margin: 0 auto; }
+
+  .id-card{
+    position:relative;
+    background: linear-gradient(160deg, #26314A, var(--ink) 70%);
+    color: var(--paper);
+    border-radius: 18px;
+    padding: 34px clamp(20px,4vw,44px) 26px;
+    overflow:hidden;
+    box-shadow: var(--shadow-card);
+    display:flex; flex-wrap:wrap;
+    align-items:flex-start; justify-content:space-between;
+    gap:18px;
+    opacity:0; animation: rise .6s ease forwards;
+  }
+  .id-card__hole{
+    position:absolute; top:16px; left:50%; transform:translateX(-50%);
+    width:52px; height:10px; border-radius:6px;
+    background: rgba(0,0,0,.35);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,.5);
+  }
+  .id-card__main{ max-width: 560px; margin-top: 20px;}
+  .id-card__eyebrow{
+    font-family:'Space Mono', monospace; font-size:.72rem; letter-spacing:.14em;
+    color:#FFD23F; margin:0 0 10px; text-transform:uppercase;
+  }
+  .id-card__title{
+    font-family:'Fraunces', serif; font-weight:600;
+    font-size: clamp(1.9rem, 4.4vw, 2.9rem); line-height:1.05; margin:0 0 12px;
+  }
+  .id-card__title em{ font-style:italic; font-weight:500; color:#FFD23F; }
+  .id-card__sub{ margin:0; font-size:1rem; color:#C7CCDA; max-width:46ch; line-height:1.5; }
+  .id-card__meta{
+    font-family:'Space Mono', monospace; text-align:right; margin-top:20px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .id-card__clock{ font-size:1.6rem; font-weight:700; letter-spacing:.03em; }
+  .id-card__date{ font-size:.8rem; color:#9AA2B4; text-transform:uppercase; letter-spacing:.08em; }
+  .id-card__barcode{
+    position:absolute; left:0; right:0; bottom:0; height:14px;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.55) 0 2px, transparent 2px 5px, rgba(255,255,255,.25) 5px 6px, transparent 6px 9px);
+    opacity:.5;
+  }
+
+  .refresh-row{ display:flex; justify-content:flex-end; margin-top:18px; }
+  .btn{
+    font-family:'Space Mono', monospace; font-size:.76rem; letter-spacing:.06em;
+    text-transform:uppercase; color:#fff; background: var(--stats);
+    border:none; padding:10px 16px; border-radius:20px; cursor:pointer; margin: 1.5px;
+  }
+  .btn:hover{ filter:brightness(1.08); }
+
+  /* ---- OVERALL SUMMARY BAND ---- */
+  .summary-band{
+    position:relative;
+    background: linear-gradient(160deg, #26314A, var(--ink) 78%);
+    color: var(--paper);
+    border-radius: var(--radius-card);
+    padding: 28px clamp(18px,3vw,36px) 26px;
+    box-shadow: var(--shadow-card);
+    margin-top: 22px;
+    opacity:0; animation: rise .55s ease forwards; animation-delay:.1s;
+  }
+  .summary-band__tab{
+    position:absolute; top:-14px; left:26px;
+    background: var(--stats); color:#fff;
+    font-family:'Space Mono', monospace; font-size:.68rem;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:6px 12px; border-radius:6px 6px 0 0;
+  }
+  .summary-band__title{ font-family:'Fraunces', serif; font-weight:600; font-size:1.3rem; margin:6px 0 4px; }
+  .summary-band__blurb{ font-size:.85rem; color:#B7BDCC; margin:0 0 18px; }
+  .summary-grid{
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap:18px;
+  }
+  .summary-metric{ border-left:3px solid var(--stats); padding-left:12px; }
+  .summary-metric__num{ font-family:'Space Mono', monospace; font-weight:700; font-size:1.5rem; display:block; }
+  .summary-metric__label{ font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:#9AA2B4; }
+
+  /* ---- SECTION GRID ---- */
+  .section-grid{
+    margin-top: 26px;
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
+    gap: 24px;
+  }
+
+  .card{
+    position:relative;
+    background: var(--paper);
+    border-radius: var(--radius-card);
+    padding: 28px 22px;
+    box-shadow: var(--shadow-card);
+    opacity:0; animation: rise .55s ease forwards;
+  }
+  .section-grid .card:nth-child(1){ animation-delay:.18s; }
+  .section-grid .card:nth-child(2){ animation-delay:.26s; }
+  .section-grid .card:nth-child(3){ animation-delay:.34s; }
+  .card::before{
+    content:"";
+    position:absolute; left:-7px; top:24px;
+    width:14px; height:14px; border-radius:50%;
+    background: var(--kraft);
+    box-shadow: 0 0 0 1px rgba(32,42,60,.06), inset 0 1px 2px rgba(32,42,60,.35);
+  }
+  .tab{
+    position:absolute; top:-14px; left:24px;
+    color:#fff;
+    font-family:'Space Mono', monospace; font-size:.68rem;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:6px 12px; border-radius:6px 6px 0 0;
+  }
+  .tab.study{ background: var(--study); }
+  .tab.expenses{ background: var(--expenses); }
+  .tab.tasks{ background: var(--tasks); }
+
+  .card__title{ font-family:'Fraunces', serif; font-weight:600; font-size:1.2rem; margin:6px 0 14px; }
+  .card__headline{
+    font-family:'Space Mono', monospace; font-size:1.05rem; font-weight:700; margin-bottom:16px;
+  }
+  .card__headline.study{ color: var(--study); }
+  .card__headline.expenses{ color: var(--expenses); }
+  .card__headline.tasks{ color: var(--tasks); }
+
+  .breakdown-list{ list-style:none; margin:0 0 16px; padding:0; }
+  .breakdown-list li{
+    display:flex; justify-content:space-between; gap:10px;
+    padding:8px 0; border-bottom:1px dashed var(--rule); font-size:.88rem;
+  }
+  .breakdown-list li:last-child{ border-bottom:none; }
+  .breakdown-list .rank{
+    font-family:'Space Mono', monospace; font-size:.72rem; color: var(--ink-soft); margin-right:6px;
+  }
+  .breakdown-list .val{ font-family:'Space Mono', monospace; }
+
+  .top-pick{
+    font-size:.84rem; padding:10px 12px; border-radius:8px;
+    background: color-mix(in srgb, var(--ink) 6%, white); color: var(--ink-soft);
+  }
+  .top-pick b{ color: var(--ink); }
+
+  .empty-state{ text-align:center; padding:20px; color: var(--ink-soft); font-style:italic; font-size:.88rem; }
+
+  .assignment-sub{ margin-top:14px; }
+  .assignment-sub__label{
+    font-family:'Space Mono', monospace; font-size:.7rem; letter-spacing:.06em; text-transform:uppercase;
+    color: var(--ink-soft); margin-bottom:8px; display:block;
+  }
+  .pill-list{ display:flex; flex-direction:column; gap:6px; }
+  .pill-list .pill{
+    font-size:.85rem; padding:7px 10px; border-radius:6px; background: color-mix(in srgb, var(--ink) 4%, white);
+  }
+  .pill-list .pill b{ font-weight:600; }
+
+  a{
+    text-decoration: none;
+    color: inherit;
+  }
+
+  table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: auto;
+  }
+
+  .table-design{
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow:
+      0 1px 2px rgba(16,24,40,0.04),
+      0 8px 16px -4px rgba(16,24,40,0.08),
+      0 24px 48px -12px rgba(16,24,40,0.14);
+    border: 1px solid rgba(16,24,40,0.04);
+    scrollbar-width: none;
+    -ms-overflow-style: none; 
+  }
+
+  .table-design::-webkit-scrollbar{
+    display: none;    
+  }
+
+  thead th{
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 14px 16px 10px;
+  }
+
+  thead th:first-child{ width: 40px; }
+
+  tbody tr{
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+
+  tbody td{
+    padding: 14px 16px;
+    color: var(--ink);
+    border-top: 1px solid var(--line);
+  }
+
+  tbody tr:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(16,24,40,0.08);
+    position: relative;
+    z-index: 1;
+  }
+
+  tbody tr:hover td{
+    border-top-color: transparent;
+  }
+
+  td, th{
+    white-space: nowrap;
+    padding: 8px 10px;
+  }
+
+  footer{
+    text-align:center; margin-top:30px; font-family:'Space Mono', monospace;
+    font-size:.74rem; letter-spacing:.05em; color: var(--ink-soft);
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(14px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  :focus-visible{ outline: 3px solid var(--ink); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } .card,.id-card,.summary-band{ opacity:1; transform:none; } }
+  @media (max-width: 640px){
+    .id-card{ flex-direction:column; } .id-card__meta{ text-align:left; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="id-card">
+    <div class="id-card__hole" aria-hidden="true"></div>
+    <div class="id-card__main">
+      <p class="id-card__eyebrow">Master Transcript · Semester Pass</p>
+      <h1 class="id-card__title">Statistics <em>Dashboard</em></h1>
+      <p class="id-card__sub">Everything from the Study, Expense, and Assignment trackers, rolled up in one place.</p>
+    </div>
+    <div class="id-card__meta">
+      <span class="id-card__clock" id="clock">--:--</span>
+      <span class="id-card__date" id="date">—</span>
+    </div>
+    <div class="id-card__barcode" aria-hidden="true"></div>
+  </header>
+
+  <div class="refresh-row">
+    <a href="/statistics" type="button" class="btn" id="refreshBtn">↻ Refresh</a>
+    <a href="/" type="button" class="btn" id="refreshBtn">🏠︎ Home</a>
+  </div>
+
+  <!-- OVERALL SUMMARY -->
+  <section class="summary-band">
+    <span class="summary-band__tab">Overall Summary</span>
+    <h2 class="summary-band__title">Semester at a Glance</h2>
+    <p class="summary-band__blurb">The same three numbers your console app's option 4 prints, side by side.</p>
+    <div class="summary-grid">
+      <div class="summary-metric">
+        {% set n = namespace(i=0) %}
+        {% for study in allStudy %}
+          {% set n.i = n.i+study.min|int %}
+        {% endfor %}
+        <span class="summary-metric__num" id="sumStudyTime">{{n.i//60}}h {{n.i%60}}m</span>
+        <span class="summary-metric__label">Total study time</span>
+      </div>
+      <div class="summary-metric">
+        {% set n = namespace(amt=0) %}
+        {% for expense in allExpense %}
+          {% set n.amt = n.amt + expense.amount|float %}
+        {% endfor %}
+        <span class="summary-metric__num" id="sumExpense">{{n.amt}}</span>
+        <span class="summary-metric__label">Total amount spent</span>
+      </div>
+      <div class="summary-metric">
+        {% set n=namespace(k=0) %}
+        {% for ass in allAss %}
+          {% if ass.status=='Completed' %}
+            {% set n.k = n.k + 1 %}
+          {% endif %}
+        {% endfor %}
+        <span class="summary-metric__num" id="sumAssignments">{{n.k}}</span>
+        <span class="summary-metric__label">Completed assignments</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- THREE DETAIL CARDS -->
+  <div class="section-grid">
+
+    <!-- STUDY -->
+    <article class="card">
+      <span class="tab study">Study Statistics</span>
+      <h3 class="card__title">Study</h3>
+      <div class="card__headline study" id="studyHeadline">
+        <div class="summary-metric">
+          {% set n = namespace(i=0) %}
+          {% for study in allStudy %}
+            {% set n.i = n.i+study.min|int %}
+          {% endfor %}
+          <span class="summary-metric__num" id="sumStudyTime">{{n.i//60}}h {{n.i%60}}m</span>
+          <span class="summary-metric__label">Total study time</span>
+        </div>
+      </div>
+      <span class="assignment-sub__label">All Sessions</span>
+      <div class="table-design">
+      <table class="table-design">
+        <thead>
+          <tr>
+            <th>Sl.no</th>
+            <th>Subject</th>
+            <th>Topic</th>
+            <th style="text-align:right">Time (min)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for study in allStudy %}
+            <tr>
+                <td>{{loop.index}}</td>
+                <td>{{study.subject}}</td>
+                <td>{{study.topic}}</td>
+                <td>{{study.min}}</td>
+            </tr>  
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      <div class="top-pick" id="studyTopPick"></div>
+    </article>
+
+    <!-- EXPENSE -->
+    <article class="card">
+      <span class="tab expenses">Expense Statistics</span>
+      <h3 class="card__title">Expenses</h3>
+      <div class="card__headline study" id="studyHeadline">
+        <div class="summary-metric">
+          {% set n = namespace(amt=0) %}
+          {% for expense in allExpense %}
+            {% set n.amt = n.amt + expense.amount|float %}
+          {% endfor %}
+          <span class="summary-metric__num" id="sumExpense">{{n.amt}}</span>
+          <span class="summary-metric__label">Total amount spent</span>
+        </div>
+      </div>
+      <span class="assignment-sub__label">All Expenses</span>
+      <div class="table-design">
+      <table class="table-design">
+        <thead>
+          <tr>
+            <th>Sl.no</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th style="text-align:right">Amount (.Rs)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for expense in allExpense %}
+            <tr>
+                <td>{{loop.index}}</td>
+                <td>{{expense.category}}</td>
+                <td>{{expense.desc}}</td>
+                <td>{{expense.amount}}</td>
+            </tr>  
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      <div class="top-pick" id="expenseTopPick"></div>
+    </article>
+
+    <!-- ASSIGNMENT -->
+    <article class="card">
+      <span class="tab tasks">Assignment Statistics</span>
+      <h3 class="card__title">Assignments</h3>
+      <div class="card__headline study" id="studyHeadline">
+        <div class="summary-metric">
+          {% set n=namespace(k=0) %}
+          {% for ass in allAss %}
+            {% if ass.status=='Completed' %}
+              {% set n.k = n.k + 1 %}
+            {% endif %}
+          {% endfor %}
+          <span class="summary-metric__num" id="sumAssignments">{{n.k}}</span>
+          <span class="summary-metric__label">Completed assignments</span>
+        </div>
+      </div>
+      <span class="assignment-sub__label">All Assignments</span>
+      <div class="table-design">
+      <table>
+        <thead>
+          <tr>
+            <th>Sl.no</th>
+            <th>Due Date</th>
+            <th>Subject</th>
+            <th>Topic</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ass in allAss %}
+            <tr>
+                <td>{{loop.index}}</td>
+                <td>{{ass.date}}</td>
+                <td>{{ass.subject}}</td>
+                <td>{{ass.assignment}}</td>
+                <td>{{ass.status}}</td>
+            </tr>  
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </article>
+
+  </div>
+
+  <footer>Reads shared storage from the Study, Expense &amp; Assignment trackers · Statistics Dashboard</footer>
+
+</div>
+
+<script>
+  function updateClock(){
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('date').textContent =
+      now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+/*
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function fmtHM(mins){
+    const h = Math.floor(mins/60), m = mins%60;
+    return `${h}h ${m}m`;
+  }
+  function fmtRupees(n){
+    return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  }
+
+  async function readStore(key, fallback){
+    try{
+      const result = await window.storage.get(key, false);
+      return result ? JSON.parse(result.value) : fallback;
+    }catch(err){
+      return fallback;
+    }
+  }
+
+  async function loadAll(){
+    const [tracker, expenseData, assignmentData] = await Promise.all([
+      readStore('study_tracker_sessions', []),
+      readStore('expense_tracker_entries', { expenses: [] }),
+      readStore('assignment_tracker_entries', { assignments: [] })
+    ]);
+
+    const sessions = Array.isArray(tracker) ? tracker : [];
+    const expenses = expenseData.expenses || [];
+    const assignments = assignmentData.assignments || [];
+
+    renderStudy(sessions);
+    renderExpense(expenses);
+    renderAssignment(assignments);
+    renderSummary(sessions, expenses, assignments);
+  }
+
+  // ---- STUDY STATISTICS (mirrors option 1) ----
+  function renderStudy(sessions){
+    const total = sessions.reduce((s,r)=>s+r.time,0);
+    document.getElementById('studyHeadline').textContent =
+      sessions.length === 0 ? 'No study sessions logged yet.' : `Total study time: ${fmtHM(total)}`;
+
+    const bySubject = {};
+    sessions.forEach(r => { bySubject[r.subject] = (bySubject[r.subject]||0) + r.time; });
+    const sorted = Object.entries(bySubject).sort((a,b)=>b[1]-a[1]);
+
+    const list = document.getElementById('studyBreakdown');
+    const pick = document.getElementById('studyTopPick');
+
+    if(sorted.length === 0){
+      list.innerHTML = '';
+      pick.innerHTML = '<span class="empty-state" style="padding:0;">Add a session in the Study Tracker to see stats here.</span>';
+      return;
+    }
+
+    list.innerHTML = sorted.map(([subject, mins], idx) =>
+      `<li><span><span class="rank">${idx+1}.</span>${escapeHtml(subject)}</span><span class="val">${fmtHM(mins)}</span></li>`
+    ).join('');
+    pick.innerHTML = `Most studied subject: <b>${escapeHtml(sorted[0][0])}</b>`;
+  }
+
+  // ---- EXPENSE STATISTICS (mirrors option 2) ----
+  function renderExpense(expenses){
+    const total = expenses.reduce((s,r)=>s+r.amount,0);
+    document.getElementById('expenseHeadline').textContent =
+      expenses.length === 0 ? 'No expenses logged yet.' : `Total amount spent: ${fmtRupees(total)}`;
+
+    const byCategory = {};
+    expenses.forEach(r => { byCategory[r.category] = (byCategory[r.category]||0) + r.amount; });
+    const sorted = Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
+
+    const list = document.getElementById('expenseBreakdown');
+    const pick = document.getElementById('expenseTopPick');
+
+    if(sorted.length === 0){
+      list.innerHTML = '';
+      pick.innerHTML = '<span class="empty-state" style="padding:0;">Add an expense in the Expense Tracker to see stats here.</span>';
+      return;
+    }
+
+    list.innerHTML = sorted.map(([cat, amt], idx) =>
+      `<li><span><span class="rank">${idx+1}.</span>${escapeHtml(cat)}</span><span class="val">${fmtRupees(amt)}</span></li>`
+    ).join('');
+    pick.innerHTML = `Highest spending category: <b>${escapeHtml(sorted[0][0])}</b>`;
+  }
+
+  // ---- ASSIGNMENT STATISTICS (mirrors option 3) ----
+  function renderAssignment(assignments){
+    document.getElementById('assignmentHeadline').textContent =
+      assignments.length === 0 ? 'No assignments logged yet.' : `Total assignments: ${assignments.length}`;
+
+    const completed = assignments.filter(a=>a.status==='C');
+    const incomplete = assignments.filter(a=>a.status==='IC');
+
+    const completedList = document.getElementById('completedList');
+    const incompleteList = document.getElementById('incompleteList');
+
+    completedList.innerHTML = completed.length === 0
+      ? '<span class="empty-state" style="padding:4px 0;">None yet.</span>'
+      : completed.map((a,i) => `<div class="pill">${i+1}. <b>${escapeHtml(a.subject)}</b> — ${escapeHtml(a.name)}</div>`).join('');
+
+    incompleteList.innerHTML = incomplete.length === 0
+      ? '<span class="empty-state" style="padding:4px 0;">None — all caught up!</span>'
+      : incomplete.map((a,i) => `<div class="pill">${i+1}. <b>${escapeHtml(a.subject)}</b> — ${escapeHtml(a.name)}</div>`).join('');
+  }
+
+  // ---- OVERALL SUMMARY (mirrors option 4) ----
+  function renderSummary(sessions, expenses, assignments){
+    const totalTime = sessions.reduce((s,r)=>s+r.time,0);
+    const totalSpent = expenses.reduce((s,r)=>s+r.amount,0);
+    const completedCount = assignments.filter(a=>a.status==='C').length;
+
+    document.getElementById('sumStudyTime').textContent = sessions.length ? fmtHM(totalTime) : '—';
+    document.getElementById('sumExpense').textContent = expenses.length ? fmtRupees(totalSpent) : '—';
+    document.getElementById('sumAssignments').textContent = assignments.length ? `${completedCount}/${assignments.length}` : '—';
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', loadAll);
+
+  loadAll();
+*/
+</script>
+</body>
+</html>

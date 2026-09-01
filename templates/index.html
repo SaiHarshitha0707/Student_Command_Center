@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Karla:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ---- token system ---- */
+    --kraft:        #EBE1C8;   /* folder / desk background */
+    --kraft-dark:   #DCCFAE;
+    --paper:        #FBF8F1;   /* index-card paper */
+    --ink:          #202A3C;   /* deep navy ink */
+    --ink-soft:     #5B6478;
+    --rule:         #D8CBA6;   /* faint ruled line */
+
+    --study:        #3B6EA5;   /* steel blue */
+    --tasks:        #D64545;   /* red marker */
+    --expenses:     #3F8F5F;   /* green ledger */
+    --weather:      #2E9BB0;   /* sky teal */
+    --github:       #4A3F6B;   /* deep violet ink */
+    --webinfo:      #C98A1E;   /* mustard highlighter */
+    --stats:        #B85C8A;   /* plum */
+
+    --radius-card: 4px 4px 14px 14px;
+    --shadow-card: 0 10px 24px -14px rgba(32,42,60,.45), 0 2px 4px rgba(32,42,60,.08);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background-color: var(--kraft);
+    background-image:
+      repeating-linear-gradient(135deg, rgba(255,255,255,.35) 0 2px, transparent 2px 26px),
+      radial-gradient(ellipse at top left, var(--kraft-dark), transparent 60%);
+    font-family:'Karla', sans-serif;
+    color: var(--ink);
+    padding: clamp(16px, 4vw, 48px);
+  }
+
+  .wrap{ max-width: 1100px; margin: 0 auto; }
+
+  /* ---------------- ID CARD HEADER ---------------- */
+  .id-card{
+    position:relative;
+    background: linear-gradient(160deg, #26314A, var(--ink) 70%);
+    color: var(--paper);
+    border-radius: 18px;
+    padding: 34px clamp(20px,4vw,44px) 26px;
+    overflow:hidden;
+    box-shadow: var(--shadow-card);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+    opacity:0;
+    animation: rise .6s ease forwards;
+  }
+  .id-card__hole{
+    position:absolute; top:16px; left:50%; transform:translateX(-50%);
+    width:52px; height:10px; border-radius:6px;
+    background: rgba(0,0,0,.35);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,.5);
+  }
+  .id-card__main{ max-width: 560px; margin-top: 20px;}
+  .id-card__eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:.72rem;
+    letter-spacing:.14em;
+    color:#FFD23F;
+    margin:0 0 10px;
+    text-transform:uppercase;
+  }
+  .id-card__title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: clamp(1.9rem, 4.4vw, 2.9rem);
+    line-height:1.05;
+    margin:0 0 12px;
+  }
+  .id-card__title em{ font-style:italic; font-weight:500; color:#FFD23F; }
+  .id-card__sub{
+    margin:0; font-size:1rem; color:#C7CCDA; max-width:46ch; line-height:1.5;
+  }
+  .id-card__meta{
+    font-family:'Space Mono', monospace;
+    text-align:right;
+    margin-top:20px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .id-card__clock{ font-size:1.6rem; font-weight:700; letter-spacing:.03em; }
+  .id-card__date{ font-size:.8rem; color:#9AA2B4; text-transform:uppercase; letter-spacing:.08em; }
+  .id-card__barcode{
+    position:absolute; left:0; right:0; bottom:0; height:14px;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.55) 0 2px, transparent 2px 5px, rgba(255,255,255,.25) 5px 6px, transparent 6px 9px);
+    opacity:.5;
+  }
+
+  /* ---------------- GRID ---------------- */
+  .grid{
+    margin-top: 34px;
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
+    gap: 30px 22px;
+  }
+
+  .card{
+    --accent: var(--ink);
+    position:relative;
+    background: var(--paper);
+    border-radius: var(--radius-card);
+    padding: 30px 22px 24px 30px;
+    box-shadow: var(--shadow-card);
+    opacity:0;
+    transform: translateY(14px) rotate(var(--tilt,0deg));
+    animation: rise .55s ease forwards;
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .grid .card:nth-child(1){ --tilt:-0.6deg; animation-delay:.05s; }
+  .grid .card:nth-child(2){ --tilt:0.5deg;  animation-delay:.12s; }
+  .grid .card:nth-child(3){ --tilt:-0.4deg; animation-delay:.19s; }
+  .grid .card:nth-child(4){ --tilt:0.6deg;  animation-delay:.26s; }
+  .grid .card:nth-child(5){ --tilt:-0.5deg; animation-delay:.33s; }
+  .grid .card:nth-child(6){ --tilt:0.4deg;  animation-delay:.40s; }
+  .grid .card:nth-child(7){ --tilt:0.4deg;  animation-delay:.47s; }
+
+  .card:hover, .card:focus-within{
+    transform: translateY(2px) rotate(0deg);
+    box-shadow: 0 16px 30px -16px rgba(32,42,60,.5), 0 3px 6px rgba(32,42,60,.12);
+  }
+
+  /* punched binder holes along the left edge */
+  .card::before{
+    content:"";
+    position:absolute; left:-7px; top:26px;
+    width:14px; height:14px; border-radius:50%;
+    background: var(--kraft);
+    box-shadow:
+      0 0 0 1px rgba(32,42,60,.06),
+      inset 0 1px 2px rgba(32,42,60,.35),
+      0 56px 0 var(--kraft), 0 56px 0 -1px rgba(32,42,60,.06), 0 56px 1px -1px rgba(32,42,60,.3),
+      0 112px 0 var(--kraft), 0 112px 0 -1px rgba(32,42,60,.06), 0 112px 1px -1px rgba(32,42,60,.3);
+  }
+
+  /* filing tab */
+  .tab{
+    position:absolute; top:-14px; left:26px;
+    background: var(--accent);
+    color:#fff;
+    font-family:'Space Mono', monospace;
+    font-size:.68rem;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    padding:6px 12px;
+    border-radius:6px 6px 0 0;
+  }
+
+  .card__top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .card__icon{
+    font-size:1.5rem;
+    width:44px; height:44px;
+    display:flex; align-items:center; justify-content:center;
+    background: color-mix(in srgb, var(--accent) 12%, white);
+    border-radius:50%;
+  }
+  .stamp{
+    font-family:'Space Mono', monospace;
+    font-size:.68rem;
+    font-weight:700;
+    color: var(--accent);
+    border:2px dashed var(--accent);
+    border-radius:50%;
+    width:78px; height:78px;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    line-height:1.15;
+    transform: rotate(-8deg);
+    padding:6px;
+    text-transform:uppercase;
+    flex-shrink:0;
+  }
+
+  .card__title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:1.28rem;
+    margin: 16px 0 8px;
+  }
+  .card__blurb{
+    margin:0 0 18px;
+    font-size:.92rem;
+    line-height:1.5;
+    color: var(--ink-soft);
+  }
+
+  .card__open{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'Space Mono', monospace;
+    font-size:.76rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:#fff;
+    background: var(--accent);
+    border:none;
+    padding:9px 14px;
+    border-radius:20px;
+    cursor:pointer;
+    text-decoration:none;
+  }
+  .card__open:hover{ filter:brightness(1.08); }
+  .card__open span{ transition: transform .2s ease; }
+  .card__open:hover span{ transform: translateX(3px); }
+
+  /* ---------------- TRANSCRIPT / STATS BAND ---------------- */
+  .transcript{
+    grid-column: 1 / -1;
+    background: linear-gradient(160deg, #26314A, var(--ink) 75%);
+    color: var(--paper);
+    border-radius: var(--radius-card);
+    padding: 28px clamp(18px,3vw,36px) 26px;
+    box-shadow: var(--shadow-card);
+    --accent: var(--stats);
+  }
+  .transcript .card__title{ color:#fff; }
+  .transcript .card__blurb{ color:#B7BDCC; }
+
+  .stats-visual {
+    position: absolute;
+    right: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    height: 100px;
+  }
+
+  .bar {
+      width: 16px;
+      border-radius: 8px 8px 2px 2px;
+      background: var(--stats);
+      opacity: 0.8;
+  }
+
+  .bar-1 { height: 35%; }
+  .bar-2 { height: 60%; }
+  .bar-3 { height: 45%; }
+  .bar-4 { height: 85%; }
+  .bar-5 { height: 70%; }
+
+  footer{
+    text-align:center;
+    margin-top:34px;
+    font-family:'Space Mono', monospace;
+    font-size:.74rem;
+    letter-spacing:.05em; 
+    color: var(--ink-soft);
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(14px) rotate(var(--tilt,0deg)); }
+    to{ opacity:1; transform: translateY(0) rotate(var(--tilt,0deg)); }
+  }
+
+  :focus-visible{ outline: 3px solid var(--ink); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+    .card, .id-card{ opacity:1; transform:none; }
+  }
+
+  @media (max-width: 640px){
+    .id-card{ flex-direction:column; }
+    .id-card__meta{ text-align:left; }
+    .card{ padding-left:26px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="id-card">
+    <div class="id-card__hole" aria-hidden="true"></div>
+    <div class="id-card__main">
+      <p class="id-card__eyebrow">All-Access · Semester Pass</p>
+      <h1 class="id-card__title">Student <em>Command</em> Center</h1>
+      <p class="id-card__sub">Everything you're juggling this term — filed, stamped, and in one place.</p>
+    </div>
+    <div class="id-card__meta">
+      <span class="id-card__clock" id="clock">--:--</span>
+      <span class="id-card__date" id="date">—</span>
+    </div>
+    <div class="id-card__barcode" aria-hidden="true"></div>
+  </header>
+
+  <main class="grid">
+
+    <article class="card" style="--accent:var(--study)">
+      <span class="tab">Study</span>
+      <div class="card__top">
+        <div class="card__icon">📚</div>
+        <div class="stamp">4 sessions<br>today</div>
+      </div>
+      <h2 class="card__title">Study</h2>
+      <p class="card__blurb">Courses, notes and reading, queued up in the order you'll actually need them.</p>
+      <a class="card__open" href="{{url_for('study_tracker')}}" data-module="study">Open <span>→</span></a>
+    </article>
+
+    <article class="card" style="--accent:var(--tasks)">
+      <span class="tab">Assignments</span>
+      <div class="card__top">
+        <div class="card__icon">📝</div>
+        <div class="stamp">3 due<br>fri</div>
+      </div>
+      <h2 class="card__title">Assignment</h2>
+      <p class="card__blurb">Assignments - sorted by what's actually due first — not just added first.</p>
+      <a class="card__open" href="{{url_for('assignment_tracker')}}" data-module="tasks">Open <span>→</span></a>
+    </article>
+
+    <article class="card" style="--accent:var(--expenses)">
+      <span class="tab">Expenses</span>
+      <div class="card__top">
+        <div class="card__icon">💸</div>
+        <div class="stamp">¥12,450<br>left</div>
+      </div>
+      <h2 class="card__title">Expenses</h2>
+      <p class="card__blurb">What's coming in against what's going out, so month-end never sneaks up on you.</p>
+      <a class="card__open" href="{{url_for('expense_tracker')}}" data-module="expenses">Open <span>→</span></a>
+    </article>
+
+    <article class="card" style="--accent:var(--weather)">
+      <span class="tab">Weather</span>
+      <div class="card__top">
+        <div class="card__icon">🌤</div>
+        <div class="stamp">22°C<br>clear</div>
+      </div>
+      <h2 class="card__title">Weather</h2>
+      <p class="card__blurb">A quick look before you leave the dorm, so the jacket decision is made for you.</p>
+      <a class="card__open" href="{{url_for('weather_report')}}" data-module="weather">Open <span>→</span></a>
+    </article>
+
+    <article class="card" style="--accent:var(--github)">
+      <span class="tab">GitHub</span>
+      <div class="card__top">
+        <div class="card__icon">💻</div>
+        <div class="stamp">128<br>commits</div>
+      </div>
+      <h2 class="card__title">GitHub</h2>
+      <p class="card__blurb">Commits, streaks and open pull requests, tracked without leaving the dashboard.</p>
+      <a class="card__open" href="{{url_for('github_repos')}}" data-module="github">Open <span>→</span></a>
+    </article>
+
+    <article class="card" style="--accent:var(--webinfo)">
+      <span class="tab">Web Info</span>
+      <div class="card__top">
+        <div class="card__icon">🔎</div>
+        <div class="stamp">9<br>saved</div>
+      </div>
+      <h2 class="card__title">Web Info</h2>
+      <p class="card__blurb">Saved articles, sources and quick lookups, kept close for when the citation comes due.</p>
+      <a class="card__open" href="{{url_for('wikidata')}}" data-module="webinfo">Open <span>→</span></a>
+    </article>
+
+    <!-- summary / transcript band -->
+    <article class="card transcript">
+      <span class="tab">Statistics</span>
+      <div class="card__top">
+        <div class="card__icon">📊</div>
+      </div>
+      
+      <div class="stats-visual">
+        <div class="bar bar-1"></div>
+        <div class="bar bar-2"></div>
+        <div class="bar bar-3"></div>
+        <div class="bar bar-4"></div>
+        <div class="bar bar-5"></div>
+      </div>
+
+      <h2 class="card__title">Your Semester, in Numbers</h2>
+      <p class="card__blurb">A running transcript pulled from every module above.</p>
+      <a class="card__open" href="{{url_for('statistics')}}" data-module="webinfo">Open <span>→</span></a>      
+    </article>
+
+  </main>
+
+  <footer>Last synced <span id="synced">just now</span> · Student Command Center</footer>
+
+</div>
+
+<script>
+  // ---- live clock / date in the ID card header ----
+  function updateClock(){
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('date').textContent =
+      now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
